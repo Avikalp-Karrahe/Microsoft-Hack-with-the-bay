@@ -1,4 +1,7 @@
+"use client";
+
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
@@ -24,7 +27,6 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboard,
-      isActive: true,
     },
     {
       title: "Documents",
@@ -55,6 +57,8 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+
   return (
     <Sidebar variant="floating" {...props}>
       <SidebarHeader>
@@ -84,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenu className="gap-2">
             {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild isActive={item.isActive}>
+                <SidebarMenuButton asChild isActive={pathname === item.url}>
                   <a href={item.url} className="font-medium">
                     <item.icon className="size-4" />
                     {item.title}
