@@ -3,7 +3,9 @@
 import { Button } from "@/components/ui/button";
 import LogoCloud from "@/components/logo-cloud";
 import { FileUpload } from "@/components/ui/file-upload";
+import { UploadProgress } from "@/components/upload-progress";
 import { ArrowRight } from "lucide-react";
+import React from "react";
 
 export default function Home() {
   const scrollToGetStarted = () => {
@@ -13,13 +15,34 @@ export default function Home() {
     });
   };
 
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState(0);
+  const [uploadStatus, setUploadStatus] = React.useState("");
+
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return;
 
     const file = files[0];
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
-      console.log("Uploading to Vercel Blob:", file.name);
+      // Status messages with timing
+      const statusMessages = [
+        { progress: 10, message: "Uploading to secure storage..." },
+        { progress: 30, message: "Saved to backend successfully..." },
+        { progress: 50, message: "Parsing PDF document..." },
+        { progress: 70, message: "Understanding SOPs..." },
+        { progress: 85, message: "Analyzing procedures..." },
+        { progress: 95, message: "Finalizing..." },
+      ];
+
+      // Animate progress
+      for (const status of statusMessages) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setUploadProgress(status.progress);
+        setUploadStatus(status.message);
+      }
 
       const formData = new FormData();
       formData.append('file', file);
@@ -37,10 +60,15 @@ export default function Home() {
       const data = await response.json();
       console.log("Successfully uploaded:", data);
 
-      alert(`Successfully uploaded ${file.name}!\nURL: ${data.file.url}`);
+      setUploadProgress(100);
+      setUploadStatus("Complete! Redirecting to dashboard...");
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error("Error uploading file:", error);
       alert(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsUploading(false);
     }
   };
 
@@ -150,18 +178,24 @@ export default function Home() {
                 </p>
               </div>
 
-              <FileUpload onChange={handleFileUpload} />
+              {!isUploading ? (
+                <>
+                  <FileUpload onChange={handleFileUpload} />
 
-              <div className="pt-4 border-t">
-                <div className="flex items-start gap-3 text-sm text-muted-foreground">
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-[#6366f1]/10 flex items-center justify-center mt-0.5">
-                    <span className="text-[#6366f1] text-xs font-bold">✓</span>
+                  <div className="pt-4 border-t">
+                    <div className="flex items-start gap-3 text-sm text-muted-foreground">
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-[#6366f1]/10 flex items-center justify-center mt-0.5">
+                        <span className="text-[#6366f1] text-xs font-bold">✓</span>
+                      </div>
+                      <p>
+                        Your documents are encrypted and processed securely. We support PDF, DOC, DOCX, and TXT formats.
+                      </p>
+                    </div>
                   </div>
-                  <p>
-                    Your documents are encrypted and processed securely. We support PDF, DOC, DOCX, and TXT formats.
-                  </p>
-                </div>
-              </div>
+                </>
+              ) : (
+                <UploadProgress progress={uploadProgress} status={uploadStatus} />
+              )}
             </div>
           </div>
         </div>
