@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import LogoCloud from "@/components/logo-cloud";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Mic } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -22,12 +23,24 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <Button
-            className="bg-[#6366f1] hover:bg-[#5558e3] text-white rounded-full px-6"
-            size="lg"
-          >
-            Get in touch <ArrowRight className="ml-1 h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              className="bg-[#6366f1] hover:bg-[#5558e3] text-white rounded-full px-6"
+              size="lg"
+            >
+              Get in touch <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+            <Link href="/vapi">
+              <Button
+                variant="outline"
+                size="lg"
+                className="rounded-full px-6 border-2"
+              >
+                <Mic className="mr-2 h-4 w-4" />
+                Try Voice Assistant
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
