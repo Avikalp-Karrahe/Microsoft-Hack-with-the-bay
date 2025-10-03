@@ -241,7 +241,7 @@ export const setupVapiEventHandlers = (
 };
 
 // Start a call with your dashboard agent
-export const startCall = async () => {
+export const startCall = async (phoneNumber?: string) => {
   try {
     // Check if VAPI is properly configured
     if (!publicKey || publicKey === 'your_vapi_public_key_here') {
@@ -251,15 +251,45 @@ export const startCall = async () => {
     // Get assistant ID from environment if available
     const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
     
+    // Create call configuration
+    let callConfig: any;
+    
     if (assistantId && assistantId !== 'your_assistant_id_here') {
       // Option 1: Use assistant ID (recommended for dashboard agents)
-      await vapi.start(assistantId);
+      callConfig = assistantId;
     } else {
       // Option 2: Use inline configuration
-      await vapi.start(dashboardAgentConfig as any);
+      callConfig = { ...dashboardAgentConfig };
     }
     
-    return true;
+    // If phone number is provided, configure for outbound call
+    if (phoneNumber) {
+      // For outbound calls, use our server-side API route to handle private key authentication
+      const response = await fetch('/api/call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: phoneNumber,
+          assistantId: typeof callConfig === 'string' ? callConfig : undefined,
+          assistant: typeof callConfig === 'object' ? callConfig.assistant : undefined
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to initiate outbound call: ${errorData.error || response.statusText}`);
+      }
+      
+      const callData = await response.json();
+      console.log('Outbound call initiated:', callData);
+      return true;
+    } else {
+      // For web calls, use the existing vapi.start() method
+      await vapi.start(callConfig);
+      return true;
+    }
   } catch (error) {
     console.error('Failed to start call:', error);
     throw error;

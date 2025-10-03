@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
 import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX, MessageSquare, Database, User } from 'lucide-react';
 
 export const VapiAgent: React.FC = () => {
@@ -37,9 +38,25 @@ export const VapiAgent: React.FC = () => {
   } = useQdrant();
 
   const [zipCodeInput, setZipCodeInput] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [isPersonalized, setIsPersonalized] = useState(false);
 
-  // Listen for ZIP code mentions in messages to trigger personalization
+  // Phone number validation
+  const isValidPhoneNumber = (phone: string) => {
+    // Basic phone number validation (10 digits with optional formatting)
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+    return phoneRegex.test(cleanPhone) && cleanPhone.length >= 10;
+  };
+
+  // Handle call initiation
+  const handleStartCall = () => {
+    if (phoneNumber.trim()) {
+      startCall(phoneNumber.trim());
+    } else {
+      startCall();
+    }
+  };
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
@@ -62,7 +79,7 @@ export const VapiAgent: React.FC = () => {
       setIsPersonalized(true);
       
       // Generate conversation context
-      await generateContext(customer.id);
+      await generateContext(customer);
       
       // You could send this context to VAPI here if needed
       // For now, it's available in the conversationContext state
@@ -115,10 +132,31 @@ export const VapiAgent: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Phone Number Input */}
+          <div className="mb-6 space-y-2">
+            <label htmlFor="phoneNumber" className="text-sm font-medium">
+              Phone Number (optional - leave empty for web call)
+            </label>
+            <Input
+              id="phoneNumber"
+              type="tel"
+              placeholder="+1234567890"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="text-center"
+              disabled={isCallActive}
+            />
+            {phoneNumber && !isValidPhoneNumber(phoneNumber) && (
+              <p className="text-sm text-destructive">
+                Please enter a valid phone number (at least 10 digits)
+              </p>
+            )}
+          </div>
+
           <div className="flex items-center justify-center space-x-4">
             {/* Main Call Button */}
             <Button
-              onClick={isCallActive ? endCall : startCall}
+              onClick={isCallActive ? endCall : handleStartCall}
               disabled={isLoading}
               size="lg"
               variant={isCallActive ? "destructive" : "default"}

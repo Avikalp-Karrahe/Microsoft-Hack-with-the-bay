@@ -116,10 +116,10 @@ export const useVapi = () => {
   ]);
 
   // Actions
-  const startVoiceCall = useCallback(async () => {
+  const startVoiceCall = useCallback(async (phoneNumber?: string) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      await startCall();
+      await startCall(phoneNumber);
     } catch (error: any) {
       setState(prev => ({
         ...prev,

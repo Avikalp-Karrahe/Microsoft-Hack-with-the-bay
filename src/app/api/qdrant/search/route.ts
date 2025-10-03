@@ -27,97 +27,153 @@ export async function POST(request: NextRequest) {
 
     switch (type) {
       case 'searchDocuments':
-        const searchResult = await qdrantClient.search(COLLECTION_NAME, {
-          vector: generateEmbedding(query),
-          limit: 5,
-          with_payload: true,
-        });
+        try {
+          const searchResult = await qdrantClient.search(COLLECTION_NAME, {
+            vector: generateEmbedding(query),
+            limit: 5,
+            with_payload: true,
+          });
 
+          if (searchResult.length > 0) {
+            return NextResponse.json({
+              success: true,
+              data: searchResult.map((result: any) => ({
+                id: result.id,
+                score: result.score,
+                content: result.payload?.content || '',
+                metadata: result.payload?.metadata || {},
+              })),
+            });
+          }
+        } catch (qdrantError) {
+          console.log('Qdrant document search failed, using mock data:', qdrantError);
+        }
+
+        // Fallback to mock document data
         return NextResponse.json({
           success: true,
-          data: searchResult.map((result: any) => ({
-            id: result.id,
-            score: result.score,
-            content: result.payload?.content || '',
-            metadata: result.payload?.metadata || {},
-          })),
+          data: [
+            {
+              id: 'doc_1',
+              score: 0.95,
+              content: `Mock loan document for query: "${query}". This document contains relevant information about loan terms, payment schedules, and customer obligations.`,
+              metadata: {
+                type: 'loan_agreement',
+                created_at: '2024-01-15',
+                customer_id: 'mock_customer'
+              }
+            },
+            {
+              id: 'doc_2',
+              score: 0.87,
+              content: `Additional mock document related to: "${query}". Contains supplementary information about loan processing and requirements.`,
+              metadata: {
+                type: 'loan_application',
+                created_at: '2024-01-10',
+                customer_id: 'mock_customer'
+              }
+            }
+          ],
         });
 
       case 'getCustomerByZip':
-        const zipResult = await qdrantClient.search(COLLECTION_NAME, {
-          vector: generateEmbedding(`customer zip code ${zipCode}`),
-          limit: 1,
-          with_payload: true,
-          filter: {
-            must: [
-              {
-                key: 'type',
-                match: { value: 'customer' }
-              },
-              {
-                key: 'zip',
-                match: { value: zipCode }
-              }
-            ]
-          }
-        });
-
-        if (zipResult.length === 0) {
-          // Return mock data for demo purposes
-          const mockCustomers = [
-            {
-              name: 'Sarah Mitchell',
-              zip: '90210',
-              loanAmount: 15000,
-              daysLate: 45,
-              balance: 12500,
-              paymentCapacity: 'moderate',
-              riskLevel: 'medium',
-              reason: 'temporary job loss'
-            },
-            {
-              name: 'James Rodriguez',
-              zip: '10001',
-              loanAmount: 25000,
-              daysLate: 60,
-              balance: 22000,
-              paymentCapacity: 'low',
-              riskLevel: 'high',
-              reason: 'medical expenses'
-            },
-            {
-              name: 'Patricia Chen',
-              zip: '60601',
-              loanAmount: 8000,
-              daysLate: 30,
-              balance: 7200,
-              paymentCapacity: 'high',
-              riskLevel: 'low',
-              reason: 'temporary cash flow issue'
+        try {
+          const zipResult = await qdrantClient.search(COLLECTION_NAME, {
+            vector: generateEmbedding(`customer zip code ${zipCode}`),
+            limit: 1,
+            with_payload: true,
+            filter: {
+              must: [
+                {
+                  key: 'type',
+                  match: { value: 'customer' }
+                },
+                {
+                  key: 'zip',
+                  match: { value: zipCode }
+                }
+              ]
             }
-          ];
-
-          const mockCustomer = mockCustomers.find(c => c.zip === zipCode) || mockCustomers[0];
-          
-          return NextResponse.json({
-            success: true,
-            data: mockCustomer,
           });
+
+          if (zipResult.length > 0) {
+            const customer = zipResult[0];
+            return NextResponse.json({
+              success: true,
+              data: {
+                name: customer.payload?.name as string || 'Unknown Customer',
+                zip: customer.payload?.zip as string || zipCode,
+                loanAmount: customer.payload?.loanAmount as number || 0,
+                daysLate: customer.payload?.daysLate as number || 0,
+                balance: customer.payload?.balance as number || 0,
+                paymentCapacity: customer.payload?.paymentCapacity as string || 'unknown',
+                riskLevel: customer.payload?.riskLevel as string || 'unknown',
+                reason: customer.payload?.reason as string || 'unknown',
+              },
+            });
+          }
+        } catch (qdrantError) {
+          console.log('Qdrant connection failed, using mock data:', qdrantError);
         }
 
-        const customer = zipResult[0];
+        // Fallback to mock data if Qdrant fails or no results found
+        const mockCustomers = [
+          {
+            name: 'Sarah Mitchell',
+            zip: '90210',
+            loanAmount: 15000,
+            daysLate: 45,
+            balance: 12500,
+            paymentCapacity: 'moderate',
+            riskLevel: 'medium',
+            reason: 'temporary job loss'
+          },
+          {
+            name: 'James Rodriguez',
+            zip: '10001',
+            loanAmount: 25000,
+            daysLate: 60,
+            balance: 22000,
+            paymentCapacity: 'low',
+            riskLevel: 'high',
+            reason: 'medical expenses'
+          },
+          {
+            name: 'Patricia Chen',
+            zip: '60601',
+            loanAmount: 8000,
+            daysLate: 30,
+            balance: 7200,
+            paymentCapacity: 'high',
+            riskLevel: 'low',
+            reason: 'temporary cash flow issue'
+          },
+          {
+            name: 'Michael Thompson',
+            zip: '94101',
+            loanAmount: 20000,
+            daysLate: 35,
+            balance: 18500,
+            paymentCapacity: 'moderate',
+            riskLevel: 'medium',
+            reason: 'business downturn'
+          }
+        ];
+
+        const mockCustomer = mockCustomers.find(c => c.zip === zipCode) || {
+          name: 'Generic Customer',
+          zip: zipCode,
+          loanAmount: 10000,
+          daysLate: 30,
+          balance: 9000,
+          paymentCapacity: 'moderate',
+          riskLevel: 'medium',
+          reason: 'financial hardship'
+        };
+        
         return NextResponse.json({
           success: true,
-          data: {
-            name: customer.payload?.name as string || 'Unknown Customer',
-            zip: customer.payload?.zip as string || zipCode,
-            loanAmount: customer.payload?.loanAmount as number || 0,
-            daysLate: customer.payload?.daysLate as number || 0,
-            balance: customer.payload?.balance as number || 0,
-            paymentCapacity: customer.payload?.paymentCapacity as string || 'unknown',
-            riskLevel: customer.payload?.riskLevel as string || 'unknown',
-            reason: customer.payload?.reason as string || 'unknown',
-          },
+          data: mockCustomer,
         });
 
       case 'getCustomerById':
