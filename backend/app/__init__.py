@@ -12,8 +12,9 @@ def create_app():
     app.config['JSON_SORT_KEYS'] = False
     
     # Register blueprints
-    from app.routes import api
+    from app.routes import api, documents
     app.register_blueprint(api.bp)
+    app.register_blueprint(documents.bp)
     
     return app
 
