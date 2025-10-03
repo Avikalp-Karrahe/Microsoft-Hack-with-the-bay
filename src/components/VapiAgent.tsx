@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useVapi } from '@/hooks/useVapi';
+import { useQdrant } from '@/hooks/useQdrant';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX, MessageSquare } from 'lucide-react';
+import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX, MessageSquare, Database, User } from 'lucide-react';
 
 export const VapiAgent: React.FC = () => {
   const {
@@ -23,6 +24,63 @@ export const VapiAgent: React.FC = () => {
     clearMessages,
     clearError,
   } = useVapi();
+
+  const {
+    isLoading: isQdrantLoading,
+    error: qdrantError,
+    customerData,
+    conversationContext,
+    searchCustomerByZip,
+    generateContext,
+    clearData: clearQdrantData,
+    clearError: clearQdrantError,
+  } = useQdrant();
+
+  const [zipCodeInput, setZipCodeInput] = useState('');
+  const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // Listen for ZIP code mentions in messages to trigger personalization
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === 'user' && lastMessage.content) {
+        // Look for ZIP code patterns (5 digits)
+        const zipMatch = lastMessage.content.match(/\b\d{5}\b/);
+        if (zipMatch && !isPersonalized) {
+          handleZipCodeDetected(zipMatch[0]);
+        }
+      }
+    }
+  }, [messages, isPersonalized]);
+
+  const handleZipCodeDetected = async (zipCode: string) => {
+    console.log('ZIP code detected:', zipCode);
+    const customer = await searchCustomerByZip(zipCode);
+    
+    if (customer) {
+      console.log('Customer found:', customer);
+      setIsPersonalized(true);
+      
+      // Generate conversation context
+      await generateContext(customer.id);
+      
+      // You could send this context to VAPI here if needed
+      // For now, it's available in the conversationContext state
+    }
+  };
+
+  const handleManualZipSearch = async () => {
+    if (zipCodeInput.trim()) {
+      await handleZipCodeDetected(zipCodeInput.trim());
+      setZipCodeInput('');
+    }
+  };
+
+  const handleClearPersonalization = () => {
+    setIsPersonalized(false);
+    clearQdrantData();
+    setZipCodeInput('');
+  };
 
   const getStatusColor = () => {
     if (error) return 'destructive';
@@ -123,22 +181,126 @@ export const VapiAgent: React.FC = () => {
       </Card>
 
       {/* Error Display */}
-      {error && (
+      {(error || qdrantError) && (
         <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-destructive rounded-full" />
-                <span className="text-destructive font-medium">Error:</span>
-                <span className="text-sm">{error}</span>
-              </div>
-              <Button onClick={clearError} variant="outline" size="sm">
-                Dismiss
-              </Button>
+          <CardHeader>
+            <CardTitle className="text-destructive">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-destructive mb-4">
+              {error || qdrantError}
+            </p>
+            <div className="flex space-x-2">
+              {error && (
+                <Button onClick={clearError} variant="outline" size="sm">
+                  Clear VAPI Error
+                </Button>
+              )}
+              {qdrantError && (
+                <Button onClick={clearQdrantError} variant="outline" size="sm">
+                  Clear Database Error
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Customer Personalization Panel */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Database className="w-5 h-5" />
+            <span>Customer Personalization</span>
+            {isPersonalized && (
+              <Badge variant="default" className="ml-2">
+                <User className="w-3 h-3 mr-1" />
+                Active
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Manual ZIP Code Search */}
+          <div className="flex space-x-2">
+            <input
+              type="text"
+              placeholder="Enter ZIP code to personalize..."
+              value={zipCodeInput}
+              onChange={(e) => setZipCodeInput(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+              maxLength={5}
+              pattern="[0-9]{5}"
+            />
+            <Button 
+              onClick={handleManualZipSearch}
+              disabled={isQdrantLoading || !zipCodeInput.trim()}
+              size="sm"
+            >
+              {isQdrantLoading ? 'Searching...' : 'Search'}
+            </Button>
+            {isPersonalized && (
+              <Button 
+                onClick={handleClearPersonalization}
+                variant="outline"
+                size="sm"
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+
+          {/* Customer Data Display */}
+          {customerData && (
+            <div className="bg-muted p-4 rounded-lg space-y-2">
+              <h4 className="font-semibold text-sm">Customer Profile:</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div><strong>Name:</strong> {customerData.name}</div>
+                <div><strong>ZIP:</strong> {customerData.zip}</div>
+                <div><strong>Loan Amount:</strong> ${customerData.loanAmount.toLocaleString()}</div>
+                <div><strong>Days Late:</strong> {customerData.daysLate}</div>
+                <div><strong>Balance:</strong> ${customerData.balance.toLocaleString()}</div>
+                <div><strong>Payment Capacity:</strong> {customerData.paymentCapacity}</div>
+                <div><strong>Risk Level:</strong> {customerData.riskLevel}</div>
+                <div><strong>Reason:</strong> {customerData.reason}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Conversation Context */}
+          {conversationContext && (
+            <div className="bg-muted p-4 rounded-lg space-y-2">
+              <h4 className="font-semibold text-sm">AI Context:</h4>
+              <div className="text-sm space-y-1">
+                <div><strong>Approach:</strong> {conversationContext.suggestedApproach}</div>
+                <div><strong>Key Points:</strong></div>
+                <ul className="list-disc list-inside ml-2 text-xs">
+                  {conversationContext.keyTalkingPoints.map((point, index) => (
+                    <li key={index}>{point}</li>
+                  ))}
+                </ul>
+                {conversationContext.riskFactors.length > 0 && (
+                  <>
+                    <div><strong>Risk Factors:</strong></div>
+                    <ul className="list-disc list-inside ml-2 text-xs text-orange-600">
+                      {conversationContext.riskFactors.map((risk, index) => (
+                        <li key={index}>{risk}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Instructions */}
+          {!isPersonalized && (
+            <div className="text-sm text-muted-foreground">
+              <p>Enter a ZIP code above or mention one during the call to personalize the agent with real customer data from the vector database.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Messages */}
       {messages.length > 0 && (
