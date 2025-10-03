@@ -180,21 +180,6 @@ export const VapiAgent: React.FC = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* Instructions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>How to Use</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>• Click the phone button to start or end a call</p>
-            <p>• Use the microphone button to mute/unmute during calls</p>
-            <p>• Speak naturally - the assistant will respond automatically</p>
-            <p>• Your conversation history will appear above</p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

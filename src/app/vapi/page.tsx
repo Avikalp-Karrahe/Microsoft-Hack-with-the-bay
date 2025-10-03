@@ -57,7 +57,7 @@ export default function VapiPage() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                  VAPI Voice Assistant
+                  fin-verc voice agent
                 </h1>
                 <div className="flex items-center justify-center space-x-2 mt-1">
                   <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />
@@ -67,7 +67,7 @@ export default function VapiPage() {
             </div>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Experience the future of voice interaction with AI-powered conversations
+            Experience an empathetic AI collections agent powered by VAPI voice technology
           </p>
         </motion.div>
 
@@ -139,106 +139,6 @@ export default function VapiPage() {
               <VapiCLI />
             </TabsContent>
           </Tabs>
-        </motion.div>
-
-        {/* Integration Guide */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="mt-12"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="w-5 h-5" />
-                <span>Connect Your VAPI Agent</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Setup Instructions</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">Create VAPI Account</p>
-                        <p className="text-sm text-muted-foreground">
-                          Sign up at dashboard.vapi.ai and create your assistant
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">Get API Keys</p>
-                        <p className="text-sm text-muted-foreground">
-                          Copy your public and private keys from the dashboard
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <Circle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">Configure Environment</p>
-                        <p className="text-sm text-muted-foreground">
-                          Add your keys to the .env.local file
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <Circle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">Update Configuration</p>
-                        <p className="text-sm text-muted-foreground">
-                          Set your assistant ID in the VAPI configuration
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Environment Variables</h3>
-                  <div className="bg-muted p-4 rounded-lg">
-                    <code className="text-sm">
-                      <div>VAPI_PUBLIC_KEY=your_public_key</div>
-                      <div>VAPI_PRIVATE_KEY=your_private_key</div>
-                      <div>NEXT_PUBLIC_VAPI_PUBLIC_KEY=your_public_key</div>
-                    </code>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Configuration Options</h4>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <p>• Use assistantId to connect to dashboard agents</p>
-                      <p>• Customize voice, model, and behavior settings</p>
-                      <p>• Configure transcription and function calling</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="text-center space-y-4">
-                <h3 className="font-semibold text-lg">Ready to Get Started?</h3>
-                <p className="text-muted-foreground">
-                  Choose between the intuitive Voice Agent interface or the powerful CLI for advanced control
-                </p>
-                <div className="flex justify-center space-x-4">
-                  <Button variant="outline" size="sm">
-                    <Phone className="w-4 h-4 mr-2" />
-                    Voice Agent
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Terminal className="w-4 h-4 mr-2" />
-                    CLI Interface
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </motion.div>
       </div>
     </div>
