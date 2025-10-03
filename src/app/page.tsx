@@ -13,9 +13,35 @@ export default function Home() {
     });
   };
 
-  const handleFileUpload = (files: File[]) => {
-    console.log("Uploaded files:", files);
-    // Handle file upload logic here
+  const handleFileUpload = async (files: File[]) => {
+    if (files.length === 0) return;
+
+    const file = files[0];
+
+    try {
+      console.log("Uploading to Vercel Blob:", file.name);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.details || 'Upload failed');
+      }
+
+      const data = await response.json();
+      console.log("Successfully uploaded:", data);
+
+      alert(`Successfully uploaded ${file.name}!\nURL: ${data.file.url}`);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   return (
