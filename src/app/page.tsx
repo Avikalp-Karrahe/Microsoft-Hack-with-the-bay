@@ -1,8 +1,23 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import LogoCloud from "@/components/logo-cloud";
+import { FileUpload } from "@/components/ui/file-upload";
 import { ArrowRight } from "lucide-react";
 
 export default function Home() {
+  const scrollToGetStarted = () => {
+    document.getElementById("get-started")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  };
+
+  const handleFileUpload = (files: File[]) => {
+    console.log("Uploaded files:", files);
+    // Handle file upload logic here
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -67,9 +82,10 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-center pt-4">
             <Button
               size="lg"
+              onClick={scrollToGetStarted}
               className="bg-[#6366f1] hover:bg-[#5558e3] text-white rounded-full px-8 text-base h-12"
             >
-              Chat with an expert <ArrowRight className="ml-2 h-4 w-4" />
+              Get started <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button
               size="lg"
@@ -84,6 +100,46 @@ export default function Home() {
 
       {/* Partner Logos Section */}
       <LogoCloud />
+
+      {/* Get Started Section */}
+      <section id="get-started" className="w-full py-24 px-6 md:px-12 lg:px-16 bg-gradient-to-b from-background to-muted/20">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center space-y-4 mb-12">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#1e1b4b] dark:text-foreground">
+              Get Started in Minutes
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Upload your Standard Operating Procedures (SOP) and let our AI-powered system analyze and optimize your loan collection process.
+            </p>
+          </div>
+
+          <div className="bg-card border rounded-2xl shadow-lg p-8 md:p-12">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-foreground">
+                  Upload Your SOP
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Share your standard operating procedures document and we'll help you streamline your collection workflow.
+                </p>
+              </div>
+
+              <FileUpload onChange={handleFileUpload} />
+
+              <div className="pt-4 border-t">
+                <div className="flex items-start gap-3 text-sm text-muted-foreground">
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-[#6366f1]/10 flex items-center justify-center mt-0.5">
+                    <span className="text-[#6366f1] text-xs font-bold">✓</span>
+                  </div>
+                  <p>
+                    Your documents are encrypted and processed securely. We support PDF, DOC, DOCX, and TXT formats.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
