@@ -1,103 +1,205 @@
-import Image from "next/image";
+"use client";
+
+import { Button } from "@/components/ui/button";
+import LogoCloud from "@/components/logo-cloud";
+import { FileUpload } from "@/components/ui/file-upload";
+import { UploadProgress } from "@/components/upload-progress";
+import { ArrowRight } from "lucide-react";
+import React from "react";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const scrollToGetStarted = () => {
+    document.getElementById("get-started")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  };
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState(0);
+  const [uploadStatus, setUploadStatus] = React.useState("");
+
+  const handleFileUpload = async (files: File[]) => {
+    if (files.length === 0) return;
+
+    const file = files[0];
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      // Status messages with timing
+      const statusMessages = [
+        { progress: 10, message: "Uploading to secure storage..." },
+        { progress: 30, message: "Saved to backend successfully..." },
+        { progress: 50, message: "Parsing PDF document..." },
+        { progress: 70, message: "Understanding SOPs..." },
+        { progress: 85, message: "Analyzing procedures..." },
+        { progress: 95, message: "Finalizing..." },
+      ];
+
+      // Animate progress
+      for (const status of statusMessages) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setUploadProgress(status.progress);
+        setUploadStatus(status.message);
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.details || 'Upload failed');
+      }
+
+      const data = await response.json();
+      console.log("Successfully uploaded:", data);
+
+      setUploadProgress(100);
+      setUploadStatus("Complete! Redirecting to dashboard...");
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="w-full px-6 py-6 md:px-12 lg:px-16">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-foreground rounded grid grid-cols-2 gap-[2px] p-1">
+              <div className="bg-background rounded-sm"></div>
+              <div className="bg-background rounded-sm"></div>
+              <div className="bg-background rounded-sm"></div>
+              <div className="bg-background rounded-sm"></div>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">LoanPro</h1>
+              <p className="text-[10px] text-muted-foreground leading-none">
+                Modern Credit Platform
+              </p>
+            </div>
+          </div>
+          <Button
+            className="bg-[#6366f1] hover:bg-[#5558e3] text-white rounded-full px-6"
+            size="lg"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Get in touch <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-20 md:px-12 lg:px-16 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute bottom-0 left-0 w-full h-[60%] bg-gradient-to-t from-muted/30 to-transparent"></div>
+          <div
+            className="absolute bottom-0 left-0 w-full h-[50%] opacity-30"
+            style={{
+              backgroundImage: `radial-gradient(circle at 2px 2px, hsl(var(--muted-foreground) / 0.15) 1px, transparent 0)`,
+              backgroundSize: '48px 48px'
+            }}
+          ></div>
+        </div>
+
+        <div className="max-w-5xl mx-auto text-center space-y-8">
+          {/* Subheading */}
+          <p className="text-base md:text-lg text-muted-foreground font-normal">
+            A better experience for lenders, better products for borrowers.
+          </p>
+
+          {/* Main Heading */}
+          <h2 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-[#1e1b4b] dark:text-foreground leading-[1.1]">
+            The leading end-to-end<br />
+            loan management system
+          </h2>
+
+          {/* Description */}
+          <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Legacy platforms are rigid, outdated, and create more work than they save. LoanPro automates
+            servicing and collections, strengthens compliance, and scales with you.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center pt-4">
+            <Button
+              size="lg"
+              onClick={scrollToGetStarted}
+              className="bg-[#6366f1] hover:bg-[#5558e3] text-white rounded-full px-8 text-base h-12"
+            >
+              Get started <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-full px-8 text-base h-12 border-2"
+            >
+              Learn more <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      {/* Partner Logos Section */}
+      <LogoCloud />
+
+      {/* Get Started Section */}
+      <section id="get-started" className="w-full py-24 px-6 md:px-12 lg:px-16 bg-gradient-to-b from-background to-muted/20">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center space-y-4 mb-12">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#1e1b4b] dark:text-foreground">
+              Get Started in Minutes
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Upload your Standard Operating Procedures (SOP) and let our AI-powered system analyze and optimize your loan collection process.
+            </p>
+          </div>
+
+          <div className="bg-card border rounded-2xl shadow-lg p-8 md:p-12">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-foreground">
+                  Upload Your SOP
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Share your standard operating procedures document and we'll help you streamline your collection workflow.
+                </p>
+              </div>
+
+              {!isUploading ? (
+                <>
+                  <FileUpload onChange={handleFileUpload} />
+
+                  <div className="pt-4 border-t">
+                    <div className="flex items-start gap-3 text-sm text-muted-foreground">
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-[#6366f1]/10 flex items-center justify-center mt-0.5">
+                        <span className="text-[#6366f1] text-xs font-bold">✓</span>
+                      </div>
+                      <p>
+                        Your documents are encrypted and processed securely. We support PDF, DOC, DOCX, and TXT formats.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <UploadProgress progress={uploadProgress} status={uploadStatus} />
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
