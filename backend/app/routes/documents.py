@@ -1,11 +1,17 @@
 from flask import Blueprint, jsonify, request
 from app.services.document_parser import DocumentParser
+from app.services.pathway_connector import PathwayStreamProcessor, get_pathway_metrics
+from app.services.aparavi_intelligence import AparaviDataIntelligence, get_aparavi_capabilities
 import os
 import tempfile
 import requests
 
 bp = Blueprint('documents', __name__, url_prefix='/api/documents')
 parser = DocumentParser()
+
+# Initialize Pathway and Aparavi integrations
+pathway_processor = PathwayStreamProcessor()
+aparavi_intel = AparaviDataIntelligence()
 
 # Store parsed results temporarily (in production, use a proper cache/db)
 _cached_results = {}
@@ -319,4 +325,125 @@ def parse_from_url():
             'details': str(e),
             'traceback': traceback.format_exc()
         }), 500
+
+
+@bp.route('/pathway/metrics', methods=['GET'])
+def pathway_metrics():
+    """
+    Get Pathway.com real-time streaming metrics
+
+    Demonstrates Pathway's:
+    - Rust-based Differential Dataflow engine
+    - 90x faster performance
+    - Real-time incremental processing
+    """
+    metrics = get_pathway_metrics()
+    stream_status = pathway_processor.connect_to_live_sources()
+
+    return jsonify({
+        'success': True,
+        'pathway_enabled': pathway_processor.enabled,
+        'metrics': metrics,
+        'connected_sources': stream_status,
+        'description': 'Pathway provides real-time ETL with Python framework powered by Rust engine'
+    })
+
+
+@bp.route('/aparavi/capabilities', methods=['GET'])
+def aparavi_capabilities():
+    """
+    Get Aparavi data intelligence capabilities
+
+    Demonstrates Aparavi's:
+    - Unstructured data discovery & classification
+    - AI-ready data preparation
+    - LLM integrations (OpenAI, Anthropic, xAI, Bedrock)
+    - 40% data reduction
+    """
+    capabilities = get_aparavi_capabilities()
+    insights = aparavi_intel.get_data_insights()
+
+    return jsonify({
+        'success': True,
+        'aparavi_enabled': aparavi_intel.enabled,
+        'capabilities': capabilities,
+        'insights': insights,
+        'description': 'Aparavi manages unstructured data with AI-powered intelligence and automation'
+    })
+
+
+@bp.route('/pathway/process', methods=['POST'])
+def pathway_process_documents():
+    """
+    Process documents through Pathway streaming pipeline
+
+    Request body:
+    {
+        "documents": [...],
+        "source_type": "vercel_blob"
+    }
+    """
+    data = request.get_json()
+
+    if not data or 'documents' not in data:
+        return jsonify({'error': 'Missing required field: documents'}), 400
+
+    documents = data['documents']
+    source_type = data.get('source_type', 'vercel_blob')
+
+    # Setup Pathway stream
+    stream_config = pathway_processor.setup_document_stream(source_type)
+
+    # Process through Pathway pipeline
+    processed_docs = pathway_processor.process_document_stream(documents)
+
+    # Create live index
+    index_info = pathway_processor.create_live_index(processed_docs)
+
+    return jsonify({
+        'success': True,
+        'stream_config': stream_config,
+        'processed_documents': processed_docs,
+        'index': index_info,
+        'pathway_engine': 'rust-differential-dataflow'
+    })
+
+
+@bp.route('/aparavi/classify', methods=['POST'])
+def aparavi_classify_documents():
+    """
+    Classify documents using Aparavi's AI intelligence
+
+    Request body:
+    {
+        "documents": [...]
+    }
+    """
+    data = request.get_json()
+
+    if not data or 'documents' not in data:
+        return jsonify({'error': 'Missing required field: documents'}), 400
+
+    documents = data['documents']
+
+    # Discover unstructured data
+    discovery = aparavi_intel.discover_unstructured_data([doc.get('name', '') for doc in documents])
+
+    # Classify documents
+    classified = aparavi_intel.classify_loan_documents(documents)
+
+    # Prepare for AI
+    ai_prepared = aparavi_intel.prepare_data_for_ai(classified)
+
+    # Apply governance
+    governed = aparavi_intel.apply_governance_policies(classified)
+
+    return jsonify({
+        'success': True,
+        'discovery': discovery,
+        'classified_documents': classified,
+        'ai_preparation': ai_prepared,
+        'governance_applied': True,
+        'aparavi_ai_powered': True
+    })
 
