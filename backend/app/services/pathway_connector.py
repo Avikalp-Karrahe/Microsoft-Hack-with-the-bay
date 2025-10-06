@@ -5,6 +5,13 @@ Handles live data ingestion and incremental processing for loan documents
 import os
 from typing import List, Dict, Any
 
+# Import pathway if available
+try:
+    import pathway as pw
+    PATHWAY_AVAILABLE = True
+except ImportError:
+    PATHWAY_AVAILABLE = False
+
 class PathwayStreamProcessor:
     """
     Pathway integration for real-time document streaming and processing.
@@ -13,7 +20,29 @@ class PathwayStreamProcessor:
 
     def __init__(self):
         self.enabled = os.getenv('PATHWAY_ENABLED', 'false').lower() == 'true'
-        self.api_key = os.getenv('PATHWAY_API_KEY', '')
+        self.license_key = os.getenv('PATHWAY_LICENSE_KEY', '')
+        
+        # Set up Pathway license key if available
+        if self.enabled and self.license_key and PATHWAY_AVAILABLE:
+            self._setup_pathway_license()
+
+    def _setup_pathway_license(self):
+        """
+        Set up Pathway license key using the official methods
+        Supports both file path and inline license key formats
+        """
+        try:
+            if self.license_key.startswith('file://'):
+                # File path format
+                pw.set_license_key(self.license_key)
+            elif self.license_key.startswith('-----BEGIN LICENSE FILE-----'):
+                # Inline license format
+                pw.set_license_key(self.license_key)
+            else:
+                # Assume it's a file path without file:// prefix
+                pw.set_license_key(f"file://{self.license_key}")
+        except Exception as e:
+            print(f"Warning: Failed to set Pathway license key: {e}")
 
     def setup_document_stream(self, source_type: str = 'vercel_blob'):
         """
