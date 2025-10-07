@@ -13,11 +13,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Vercel Blob
+    // Upload to Vercel Blob with public access
     const blob = await put(file.name, file, {
       access: 'public',
       addRandomSuffix: true,
     });
+
+    console.log('Uploaded file URL:', blob.url);
+    console.log('File access level: public');
 
     // Automatically trigger document parsing after successful upload
     try {
@@ -35,11 +38,15 @@ export async function POST(request: NextRequest) {
         }),
       });
 
+      console.log('Parse response status:', parseResponse.status);
+      const responseText = await parseResponse.text();
+      console.log('Parse response body:', responseText);
+
       if (!parseResponse.ok) {
-        console.error('Parse response error:', await parseResponse.text());
+        console.error('Parse response error:', responseText);
         // Don't fail the upload if parsing fails, just log the error
       } else {
-        const parseResult = await parseResponse.json();
+        const parseResult = JSON.parse(responseText);
         console.log('Document parsed successfully:', parseResult);
         
         // Store parsed data in response for immediate use
