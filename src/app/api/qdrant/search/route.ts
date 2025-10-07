@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
           if (searchResult.length > 0) {
             return NextResponse.json({
               success: true,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               data: searchResult.map((result: any) => ({
                 id: result.id,
                 score: result.score,

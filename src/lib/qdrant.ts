@@ -4,7 +4,7 @@ export interface LoanDocument {
   id: string;
   content: string;
   score: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface CustomerData {
@@ -120,7 +120,7 @@ export function generateConversationContext(customer: CustomerData): Conversatio
   
   let suggestedApproach = '';
   let keyTalkingPoints: string[] = [];
-  let riskFactors: string[] = [];
+  const riskFactors: string[] = [];
   let recommendedPaymentPlan = '';
 
   // Determine approach based on risk level and payment capacity

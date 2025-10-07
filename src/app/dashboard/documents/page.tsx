@@ -55,19 +55,19 @@ export default function DocumentsPage() {
       try {
         setLoading(true);
 
-        // Check localStorage first
+        // Check localStorage first for recently uploaded and parsed data
         const cachedData = localStorage.getItem('parsed-document-data');
         const cachedUrl = localStorage.getItem('parsed-document-url');
 
         if (cachedData && cachedUrl) {
-          console.log('Using cached document data');
+          console.log('Using cached document data from recent upload');
           setDocumentData(JSON.parse(cachedData));
           setDocumentUrl(cachedUrl);
           setLoading(false);
           return;
         }
 
-        // Fetch fresh data
+        // Fetch fresh data if no cache available
         const docResponse = await fetch('/api/parse-document');
         if (!docResponse.ok) throw new Error('Failed to fetch document');
 
@@ -295,7 +295,7 @@ export default function DocumentsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {currentChunks.map((chunk, index) => (
+                  {currentChunks.map((chunk) => (
                     <div key={chunk.index} className="rounded-lg border p-4 bg-muted/30 hover:bg-muted/50 transition-colors">
                       <div className="flex items-center justify-between mb-3">
                         <Badge variant="outline" className="font-mono">

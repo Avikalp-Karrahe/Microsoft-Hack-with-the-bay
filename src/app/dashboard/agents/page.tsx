@@ -698,7 +698,7 @@ export default function AgentsPage() {
                       <div className="flex-1">
                         <p className="font-semibold mb-1">Verified by Stripe</p>
                         <p className="text-sm text-muted-foreground">
-                          Payment has been verified and confirmed by Stripe's secure payment processing system.
+                          Payment has been verified and confirmed by Stripe&apos;s secure payment processing system.
                           Funds have been successfully transferred and the account has been marked as paid in full.
                         </p>
                       </div>

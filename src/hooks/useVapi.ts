@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { vapi, setupVapiEventHandlers, startCall, stopCall, sendMessage, setMuted } from '@/lib/vapi';
+import { setupVapiEventHandlers, startCall, stopCall, sendMessage, setMuted } from '@/lib/vapi';
 
 export interface VapiMessage {
   role: 'user' | 'assistant' | 'system';
@@ -64,11 +64,11 @@ export const useVapi = () => {
     }));
   }, []);
 
-  const handleMessage = useCallback((message: any) => {
+  const handleMessage = useCallback((message: Record<string, unknown>) => {
     if (message.type === 'transcript' && message.transcript) {
       const newMessage: VapiMessage = {
-        role: message.role || 'user',
-        content: message.transcript,
+        role: (message.role as 'user' | 'assistant' | 'system') || 'user',
+        content: message.transcript as string,
         timestamp: new Date(),
       };
       
@@ -79,7 +79,7 @@ export const useVapi = () => {
     }
   }, []);
 
-  const handleError = useCallback((error: any) => {
+  const handleError = useCallback((error: Error | { message?: string }) => {
     setState(prev => ({
       ...prev,
       error: error.message || 'An error occurred',
@@ -120,10 +120,11 @@ export const useVapi = () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       await startCall(phoneNumber);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start call';
       setState(prev => ({
         ...prev,
-        error: error.message || 'Failed to start call',
+        error: errorMessage,
         isLoading: false,
       }));
     }
@@ -148,10 +149,11 @@ export const useVapi = () => {
         ...prev,
         messages: [...prev.messages, userMessage],
       }));
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
       setState(prev => ({
         ...prev,
-        error: error.message || 'Failed to send message',
+        error: errorMessage,
       }));
     }
   }, []);

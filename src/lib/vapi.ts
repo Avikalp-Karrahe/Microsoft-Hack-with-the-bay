@@ -252,8 +252,8 @@ export const setupVapiEventHandlers = (
   onCallEnd?: () => void,
   onSpeechStart?: () => void,
   onSpeechEnd?: () => void,
-  onMessage?: (message: any) => void,
-  onError?: (error: any) => void,
+  onMessage?: (message: Record<string, unknown>) => void,
+  onError?: (error: Error | { message?: string }) => void,
   onVolumeLevel?: (volume: number) => void
 ) => {
   vapi.on('call-start', () => {
@@ -303,6 +303,7 @@ export const startCall = async (phoneNumber?: string) => {
     const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
     
     // Create call configuration
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let callConfig: any;
     
     if (assistantId && assistantId !== 'your_assistant_id_here') {

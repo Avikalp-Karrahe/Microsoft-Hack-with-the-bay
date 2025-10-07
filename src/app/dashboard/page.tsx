@@ -44,7 +44,7 @@ export default function DashboardPage() {
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Welcome back!</h2>
             <p className="text-muted-foreground">
-              Here's an overview of your loan collection operations
+              Here&apos;s an overview of your loan collection operations
             </p>
           </div>
 

@@ -37,11 +37,11 @@ export default function Home() {
         { progress: 95, message: "Finalizing..." },
       ];
 
-      // Animate progress
-      for (const status of statusMessages) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setUploadProgress(status.progress);
-        setUploadStatus(status.message);
+      // Animate progress for upload phase
+      for (let i = 0; i < 2; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setUploadProgress(statusMessages[i].progress);
+        setUploadStatus(statusMessages[i].message);
       }
 
       const formData = new FormData();
@@ -60,11 +60,37 @@ export default function Home() {
       const data = await response.json();
       console.log("Successfully uploaded:", data);
 
-      setUploadProgress(100);
-      setUploadStatus("Complete! Redirecting to dashboard...");
+      // Continue with parsing status messages if auto-parsing is happening
+      if (data.autoParsed) {
+        // Continue with remaining status messages for parsing
+        for (let i = 2; i < statusMessages.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          setUploadProgress(statusMessages[i].progress);
+          setUploadStatus(statusMessages[i].message);
+        }
+
+        // Cache the parsed data immediately
+        if (data.parsedData) {
+          localStorage.setItem('parsed-document-data', JSON.stringify(data.parsedData));
+          localStorage.setItem('parsed-document-url', data.file.url);
+        }
+
+        setUploadProgress(100);
+        setUploadStatus("Complete! Document parsed and ready. Redirecting...");
+      } else {
+        // If parsing failed or didn't happen, still show completion
+        setUploadProgress(100);
+        setUploadStatus("Upload complete! Redirecting to dashboard...");
+      }
 
       await new Promise(resolve => setTimeout(resolve, 1000));
-      window.location.href = '/dashboard';
+      
+      // Redirect to documents page if parsing was successful, otherwise dashboard
+      if (data.autoParsed && data.parsedData) {
+        window.location.href = '/dashboard/documents';
+      } else {
+        window.location.href = '/dashboard';
+      }
     } catch (error) {
       console.error("Error uploading file:", error);
       alert(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -174,7 +200,7 @@ export default function Home() {
                   Upload Your SOP
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Share your standard operating procedures document and we'll help you streamline your collection workflow.
+                  Share your standard operating procedures document and we&apos;ll help you streamline your collection workflow.
                 </p>
               </div>
 

@@ -29,7 +29,7 @@ function formatPhoneNumberE164(phone: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { phoneNumber, borrowerName, loanNumber, outstandingBalance, daysPastDue } = await request.json();
+    const { phoneNumber } = await request.json();
 
     if (!phoneNumber) {
       return NextResponse.json(

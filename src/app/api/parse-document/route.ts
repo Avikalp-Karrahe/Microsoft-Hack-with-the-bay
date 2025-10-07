@@ -12,10 +12,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call Flask backend with the document URL
-    // Flask will download and parse it
-    const flaskUrl = process.env.FLASK_BACKEND_URL || 'http://localhost:3001';
-    const parseResponse = await fetch(`${flaskUrl}/api/documents/parse-url`, {
+    // Call the Next.js API route instead of the Python serverless function
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? `https://${request.headers.get('host')}` 
+      : 'http://localhost:3000';
+    
+    const parseResponse = await fetch(`${baseUrl}/api/documents/parse-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,8 +28,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (!parseResponse.ok) {
-      const errorData = await parseResponse.json();
-      throw new Error(errorData.error || 'Flask backend parsing failed');
+      const errorText = await parseResponse.text();
+      console.error('Parse response error:', errorText);
+      throw new Error(`Parse service error: ${parseResponse.status}`);
     }
 
     const parseResult = await parseResponse.json();
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get list of documents from Vercel Blob
     const { blobs } = await list();

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import {
@@ -65,7 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/">
+              <Link href="/">
                 <div className="bg-[#6366f1] text-white flex aspect-square size-8 items-center justify-center rounded-lg">
                   <div className="grid grid-cols-2 gap-[2px] w-4 h-4">
                     <div className="bg-white rounded-[1px]"></div>
@@ -74,11 +75,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <div className="bg-white rounded-[1px]"></div>
                   </div>
                 </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">LoanPro</span>
-                  <span className="text-xs text-muted-foreground">Modern Credit Platform</span>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Fin-Verc</span>
+                  <span className="truncate text-xs">AI Collections</span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

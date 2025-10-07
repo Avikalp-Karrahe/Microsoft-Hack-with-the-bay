@@ -6,7 +6,7 @@ import os
 import tempfile
 import requests
 
-bp = Blueprint('documents', __name__, url_prefix='/api/documents')
+bp = Blueprint('documents', __name__)
 parser = DocumentParser()
 
 # Initialize Pathway and Aparavi integrations
@@ -255,7 +255,7 @@ def get_markdown():
     })
 
 
-@bp.route('/parse-url', methods=['POST'])
+@bp.route('/documents/parse-url', methods=['POST'])
 def parse_from_url():
     """
     Download a document from URL and parse it
@@ -303,27 +303,44 @@ def parse_from_url():
         except:
             pass
 
-        return jsonify({
+        # Limit response size to prevent JSON truncation in serverless functions
+        # Vercel has a 4.5MB response limit for serverless functions
+        max_chunks = 50  # Limit chunks to prevent oversized responses
+        limited_chunks = chunks[:max_chunks] if len(chunks) > max_chunks else chunks
+        
+        # Truncate markdown if it's too large (keep first 50KB)
+        max_markdown_size = 50000
+        truncated_markdown = markdown[:max_markdown_size] if len(markdown) > max_markdown_size else markdown
+        if len(markdown) > max_markdown_size:
+            truncated_markdown += "\n\n... (content truncated due to size limits)"
+
+        response_data = {
             'success': True,
             'summary': summary,
-            'chunks': chunks,
-            'markdown': markdown,
-            'total_chunks': len(chunks)
-        })
+            'chunks': limited_chunks,
+            'markdown': truncated_markdown,
+            'total_chunks': len(chunks),
+            'chunks_returned': len(limited_chunks),
+            'markdown_truncated': len(markdown) > max_markdown_size
+        }
+
+        return jsonify(response_data)
 
     except requests.RequestException as e:
         return jsonify({
+            'success': False,
             'error': 'Failed to download document',
             'details': str(e)
         }), 500
 
     except Exception as e:
         import traceback
+        print(f"Error in parse-url: {str(e)}")
         traceback.print_exc()
         return jsonify({
+            'success': False,
             'error': 'Failed to parse document',
-            'details': str(e),
-            'traceback': traceback.format_exc()
+            'details': str(e)
         }), 500
 
 
