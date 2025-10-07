@@ -4,4 +4,7 @@ Flask==3.0.0
 flask-cors==4.0.0
 python-dotenv==1.0.0
 agentic-doc
+easyocr
+opencv-python-headless
+pillow
 

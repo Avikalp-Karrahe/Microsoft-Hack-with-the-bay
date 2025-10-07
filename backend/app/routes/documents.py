@@ -307,51 +307,143 @@ def parse_from_url():
         temp_dir = os.path.dirname(temp_path)
         temp_filename = os.path.basename(temp_path)
 
-        # Parse the document
-        results = parser.parse_documents(temp_dir, temp_filename)
+        # Check if it's an image file and handle OCR
+        image_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp']
+        if file_extension.lower() in image_extensions:
+            # Use OCR for image files
+            try:
+                import easyocr
+                import cv2
+                import numpy as np
+                
+                # Initialize OCR reader
+                reader = easyocr.Reader(['en'])
+                
+                # Read the image
+                image = cv2.imread(temp_path)
+                if image is None:
+                    raise ValueError("Could not load image file")
+                
+                # Perform OCR
+                ocr_results = reader.readtext(image)
+                
+                # Extract text with confidence filtering
+                extracted_text = []
+                for (bbox, text, confidence) in ocr_results:
+                    if confidence >= 0.5:  # Filter by confidence
+                        extracted_text.append(text)
+                
+                full_text = ' '.join(extracted_text)
+                
+                # Create chunks from OCR text
+                chunks = []
+                if full_text.strip():
+                    # Split text into reasonable chunks (by sentences or paragraphs)
+                    sentences = full_text.split('. ')
+                    for i, sentence in enumerate(sentences):
+                        if sentence.strip():
+                            chunks.append({
+                                'index': i,
+                                'text': sentence.strip() + ('.' if not sentence.endswith('.') else ''),
+                                'chunk_type': 'ocr_text',
+                                'pages': [0]
+                            })
+                
+                # Create summary
+                summary = {
+                    'total_documents': 1,
+                    'total_pages': 1,
+                    'documents': [{
+                        'filename': 'image',
+                        'page_count': 1,
+                        'chunk_count': len(chunks)
+                    }]
+                }
+                
+                # Clean up temp file
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+                
+                return jsonify({
+                    'success': True,
+                    'summary': summary,
+                    'chunks': chunks,
+                    'chunks_returned': len(chunks),
+                    'total_chunks': len(chunks),
+                    'markdown': full_text,
+                    'markdown_truncated': False
+                })
+                
+            except ImportError:
+                # OCR libraries not available, return error
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+                return jsonify({
+                    'error': 'OCR libraries not available for image processing',
+                    'details': 'Install easyocr and opencv-python to process image files'
+                }), 500
+            except Exception as ocr_error:
+                # OCR failed, return error
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+                return jsonify({
+                    'error': 'OCR processing failed',
+                    'details': str(ocr_error)
+                }), 500
+        else:
+            # Use agentic_doc for PDF and other document types
+            results = parser.parse_documents(temp_dir, temp_filename)
 
-        # Cache results
-        _cached_results[temp_dir] = results
+            # Cache results
+            _cached_results[temp_dir] = results
 
-        # Get summary and chunks
-        summary = parser.get_document_summary(results)
-        chunks = parser.get_all_chunks(results)
-        markdown = parser.get_markdown(results)
+            # Get summary and chunks
+            summary = parser.get_document_summary(results)
+            chunks = parser.get_all_chunks(results)
+            markdown = parser.get_markdown(results)
 
-        # Clean up temp file
-        try:
-            os.unlink(temp_path)
-        except:
-            pass
+            # Clean up temp file
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
 
-        # Limit response size to prevent JSON truncation in serverless functions
-        # Vercel has a 4.5MB response limit for serverless functions
-        max_chunks = 50  # Limit chunks to prevent oversized responses
-        limited_chunks = chunks[:max_chunks] if len(chunks) > max_chunks else chunks
-        
-        # Truncate markdown if it's too large (keep first 50KB)
-        max_markdown_size = 50000
-        truncated_markdown = markdown[:max_markdown_size] if len(markdown) > max_markdown_size else markdown
-        if len(markdown) > max_markdown_size:
-            truncated_markdown += "\n\n... (content truncated due to size limits)"
+            # Limit response size to prevent JSON truncation in serverless functions
+            # Vercel has a 4.5MB response limit for serverless functions
+            max_chunks = 50  # Limit chunks to prevent oversized responses
+            limited_chunks = chunks[:max_chunks] if len(chunks) > max_chunks else chunks
+            
+            # Truncate markdown if it's too large (keep first 50KB)
+            max_markdown_size = 50000
+            truncated_markdown = markdown[:max_markdown_size] if len(markdown) > max_markdown_size else markdown
+            if len(markdown) > max_markdown_size:
+                truncated_markdown += "\n\n... (content truncated due to size limits)"
 
-        response_data = {
-            'success': True,
-            'summary': summary,
-            'chunks': limited_chunks,
-            'markdown': truncated_markdown,
-            'total_chunks': len(chunks),
-            'chunks_returned': len(limited_chunks),
-            'markdown_truncated': len(markdown) > max_markdown_size
-        }
+            response_data = {
+                'success': True,
+                'summary': summary,
+                'chunks': limited_chunks,
+                'chunks_returned': len(limited_chunks),
+                'total_chunks': len(chunks),
+                'markdown': truncated_markdown,
+                'markdown_truncated': len(markdown) > max_markdown_size
+            }
 
-        return jsonify(response_data)
+            return jsonify(response_data)
 
-    except requests.RequestException as e:
+    except requests.exceptions.RequestException as e:
         return jsonify({
-            'success': False,
-            'error': 'Failed to download document',
-            'details': str(e)
+            'error': f'Failed to download document: {str(e)}'
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'error': f'Failed to parse document: {str(e)}'
         }), 500
 
     except Exception as e:
