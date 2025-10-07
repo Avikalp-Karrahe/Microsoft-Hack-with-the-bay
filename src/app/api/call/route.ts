@@ -45,23 +45,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Debug logging for environment variables
+    console.log('VAPI Environment Variables:');
+    console.log('VAPI_API_KEY:', VAPI_API_KEY ? 'Set' : 'Not set');
+    console.log('VAPI_ASSISTANT_ID:', VAPI_ASSISTANT_ID);
+    console.log('VAPI_PHONE_NUMBER_ID:', VAPI_PHONE_NUMBER_ID);
+
+    // Check if UUIDs are properly set
+    if (!VAPI_ASSISTANT_ID) {
+      return NextResponse.json(
+        { error: 'VAPI Assistant ID not configured' },
+        { status: 500 }
+      );
+    }
+
+    if (!VAPI_PHONE_NUMBER_ID) {
+      return NextResponse.json(
+        { error: 'VAPI Phone Number ID not configured' },
+        { status: 500 }
+      );
+    }
+
     // Format phone number to E.164
     const formattedPhone = formatPhoneNumberE164(phoneNumber);
 
     // Create a call with VAPI
+    const requestBody = {
+      assistantId: VAPI_ASSISTANT_ID,
+      phoneNumberId: VAPI_PHONE_NUMBER_ID,
+      customer: {
+        number: formattedPhone,
+      },
+    };
+
+    console.log('VAPI Request Body:', JSON.stringify(requestBody, null, 2));
+
     const response = await fetch('https://api.vapi.ai/call/phone', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${VAPI_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        assistantId: VAPI_ASSISTANT_ID,
-        phoneNumberId: VAPI_PHONE_NUMBER_ID,
-        customer: {
-          number: formattedPhone,
-        },
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
