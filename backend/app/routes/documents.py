@@ -277,8 +277,29 @@ def parse_from_url():
         response = requests.get(url, timeout=30)
         response.raise_for_status()
 
-        # Save to temp file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+        # Detect file type from URL or content-type
+        file_extension = '.pdf'  # default
+        if url.lower().endswith(('.pdf', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp')):
+            file_extension = '.' + url.split('.')[-1].lower()
+        elif 'content-type' in response.headers:
+            content_type = response.headers['content-type'].lower()
+            if 'pdf' in content_type:
+                file_extension = '.pdf'
+            elif 'png' in content_type:
+                file_extension = '.png'
+            elif 'jpeg' in content_type or 'jpg' in content_type:
+                file_extension = '.jpg'
+            elif 'gif' in content_type:
+                file_extension = '.gif'
+            elif 'bmp' in content_type:
+                file_extension = '.bmp'
+            elif 'tiff' in content_type:
+                file_extension = '.tiff'
+            elif 'webp' in content_type:
+                file_extension = '.webp'
+
+        # Save to temp file with proper extension
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
             temp_file.write(response.content)
             temp_path = temp_file.name
 
