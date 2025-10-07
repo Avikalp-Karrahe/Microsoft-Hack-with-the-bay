@@ -55,19 +55,7 @@ export default function DocumentsPage() {
       try {
         setLoading(true);
 
-        // Check localStorage first for recently uploaded and parsed data
-        const cachedData = localStorage.getItem('parsed-document-data');
-        const cachedUrl = localStorage.getItem('parsed-document-url');
-
-        if (cachedData && cachedUrl) {
-          console.log('Using cached document data from recent upload');
-          setDocumentData(JSON.parse(cachedData));
-          setDocumentUrl(cachedUrl);
-          setLoading(false);
-          return;
-        }
-
-        // Fetch fresh data if no cache available
+        // Always fetch fresh data - no caching
         const docResponse = await fetch('/api/parse-document');
         if (!docResponse.ok) throw new Error('Failed to fetch document');
 
@@ -89,10 +77,6 @@ export default function DocumentsPage() {
         if (!parseResponse.ok) throw new Error('Failed to parse document');
 
         const parseData = await parseResponse.json();
-
-        // Cache the data
-        localStorage.setItem('parsed-document-data', JSON.stringify(parseData.data));
-        localStorage.setItem('parsed-document-url', docData.document.url);
 
         setDocumentData(parseData.data);
       } catch (err) {

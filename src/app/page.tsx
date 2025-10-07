@@ -69,12 +69,6 @@ export default function Home() {
           setUploadStatus(statusMessages[i].message);
         }
 
-        // Cache the parsed data immediately
-        if (data.parsedData) {
-          localStorage.setItem('parsed-document-data', JSON.stringify(data.parsedData));
-          localStorage.setItem('parsed-document-url', data.file.url);
-        }
-
         setUploadProgress(100);
         setUploadStatus("Complete! Document parsed and ready. Redirecting...");
       } else {
